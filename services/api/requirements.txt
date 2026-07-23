@@ -1,0 +1,8 @@
+genblaze-core
+genblaze-s3
+genblaze-gmicloud
+genblaze-openai
+fastapi
+uvicorn
+pydantic-settings
+python-dotenv
