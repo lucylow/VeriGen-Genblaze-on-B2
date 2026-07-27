@@ -13,6 +13,9 @@ from ..repo.pipelines import (
 )
 from ..repo.agentic import AgenticMediaEngine
 from ..repo.multimodal import build_talkcuts_pipeline, build_moviebench_long_video_pipeline
+from ..repo.ai_agent import VeriGenAIAgent
+from ..repo.genblaze_adv import build_resilient_pipeline, VeriGenTracer
+from ..utils.fallbacks import safe_execute, MockMediaProvider
 
 router = APIRouter(prefix="/api/v1", tags=["pipelines"])
 
@@ -20,8 +23,23 @@ router = APIRouter(prefix="/api/v1", tags=["pipelines"])
 _result_cache = {}
 
 @router.post("/generate/image")
-async def generate_image(prompt: str, run_id: str):
-    pipeline = build_image_pipeline(prompt=prompt)
+async def generate_image(prompt: str, run_id: str, optimize: bool = False, resilient: bool = True):
+    """Generate an image with AI optimization and optional resiliency."""
+    final_prompt = prompt
+    model = settings.DEFAULT_IMAGE_MODEL
+    
+    if optimize:
+        agent = VeriGenAIAgent()
+        optimization = agent.optimize_intent(prompt, "image")
+        final_prompt = optimization.get("optimized_prompt", prompt)
+
+    if resilient:
+        # Use advanced Genblaze fallback chains
+        fallbacks = ["flux-schnell", "sdxl-turbo"]
+        pipeline = build_resilient_pipeline(final_prompt, model, fallbacks)
+    else:
+        pipeline = build_image_pipeline(prompt=final_prompt, model=model)
+        
     return StreamingResponse(
         stream_pipeline(pipeline, run_id),
         media_type="text/event-stream"
@@ -58,6 +76,10 @@ async def stream_pipeline(pipeline, run_id: str, parent_id: Optional[str] = None
         async for event in pipeline.stream(sink=sink, timeout=settings.PIPELINE_TIMEOUT):
             yield f"event: {event.type}\n"
             yield f"data: {json.dumps(event.model_dump())}\n\n"
+    except Exception as e:
+        logger.error(f"Pipeline Stream Error: {e}")
+        yield f"event: error\n"
+        yield f"data: {json.dumps({'error': 'Pipeline failed. Check credentials or provider status.', 'details': str(e)})}\n\n"
             
             if event.type == "complete":
                 result = event.data.get("result")

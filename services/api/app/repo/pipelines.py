@@ -12,14 +12,13 @@ from genblaze_gmicloud import (
 from genblaze_openai import DalleProvider, OpenAITTSProvider
 
 from ..config.settings import settings
+from .b2_advanced import VeriGenB2Storage
 
 # --- Shared storage sink (reused across all pipelines) ---
 # Note: Using a lazy loader for storage to avoid issues if keys aren't set during import
-def get_storage_sink() -> ObjectStorageSink:
-    return ObjectStorageSink(
-        S3StorageBackend.for_backblaze(settings.B2_BUCKET_NAME),
-        key_strategy=KeyStrategy.HIERARCHICAL,
-    )
+def get_storage_sink() -> VeriGenB2Storage:
+    """Return the advanced VeriGen B2 storage sink."""
+    return VeriGenB2Storage(settings.B2_BUCKET_NAME)
 
 
 def build_image_pipeline(
