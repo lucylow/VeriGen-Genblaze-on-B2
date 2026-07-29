@@ -1,25 +1,3 @@
-
-
-## Project Structure
-
-- `services/api/app/repo/pipelines.py`: Centralized Genblaze pipeline logic.
-- `services/api/app/runtime/routes.py`: FastAPI routes for media generation.
-- `services/api/app/config/settings.py`: Pydantic-based configuration management.
-
-## Getting Started
-
-1. Install dependencies:
-   ```bash
-   pip install -r services/api/requirements.txt
-   ```
-2. Configure your `.env` with Backblaze B2 and GMICloud credentials.
-3. Run the API:
-   ```bash
-   uvicorn services.api.app.main:app --reload
-   ```
-
-
-
 # VeriGen
 ### Multi-Model AI Consensus Engine for Trustworthy Generative Media
 
@@ -281,6 +259,28 @@ Advantages
 ---
 
 # Architecture
+
+
+
+## Project Structure
+
+- `services/api/app/repo/pipelines.py`: Centralized Genblaze pipeline logic.
+- `services/api/app/runtime/routes.py`: FastAPI routes for media generation.
+- `services/api/app/config/settings.py`: Pydantic-based configuration management.
+
+## Getting Started
+
+1. Install dependencies:
+   ```bash
+   pip install -r services/api/requirements.txt
+   ```
+2. Configure your `.env` with Backblaze B2 and GMICloud credentials.
+3. Run the API:
+   ```bash
+   uvicorn services.api.app.main:app --reload
+   ```
+
+
 
 ## High-Level System
 
