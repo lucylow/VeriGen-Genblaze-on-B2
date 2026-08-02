@@ -1,12 +1,18 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { ArrowRight, Zap, Shield, Layers } from "lucide-react";
+import { ArrowRight, Zap, Shield, Layers, LayoutDashboard, Settings } from "lucide-react";
 import { startLogin } from "@/const";
+import { useDemoMode } from "@/hooks/useDemoMode";
+import { Dashboard } from "@/components/Dashboard";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export default function Home() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [, setLocation] = useLocation();
+  const { isDemoMode, toggleDemoMode } = useDemoMode();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
@@ -18,8 +24,19 @@ export default function Home() {
               <span className="text-white font-bold text-sm">V</span>
             </div>
             <span className="font-bold text-lg text-slate-900">VeriGen</span>
+            {isDemoMode && (
+              <Badge variant="secondary" className="ml-2 bg-emerald-100 text-emerald-700 border-emerald-200">
+                Demo Mode
+              </Badge>
+            )}
           </div>
-          <div>
+          <div className="flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-2">
+              <Switch id="demo-mode" checked={isDemoMode} onCheckedChange={toggleDemoMode} />
+              <Label htmlFor="demo-mode" className="text-xs font-medium text-slate-600 cursor-pointer">
+                Demo Mode
+              </Label>
+            </div>
             {isAuthenticated ? (
               <Button
                 onClick={() => setLocation("/generate")}
@@ -39,41 +56,58 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="max-w-6xl mx-auto px-4 py-24 text-center">
-        <div className="mb-8">
-          <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
-            One Prompt.
-            <br />
-            <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-              Multiple Models.
-            </span>
-            <br />
-            One Verified Winner.
-          </h1>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
-            VeriGen submits your prompt to multiple AI providers simultaneously, scores each output across quality dimensions, and delivers the consensus winner with complete provenance.
-          </p>
+      {isAuthenticated && isDemoMode ? (
+        <div className="max-w-6xl mx-auto px-4 py-12">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Welcome back, {user?.name || 'Alex'}</h1>
+              <p className="text-slate-600">Here's what's happening across your AI workflows today.</p>
+            </div>
+            <Button onClick={() => setLocation("/generate")} className="bg-emerald-600 hover:bg-emerald-700">
+              <Zap className="w-4 h-4 mr-2" /> New Generation
+            </Button>
+          </div>
+          <Dashboard />
         </div>
+      ) : (
+        <>
+          {/* Hero Section */}
+          <section className="max-w-6xl mx-auto px-4 py-24 text-center">
+            <div className="mb-8">
+              <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+                One Prompt.
+                <br />
+                <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                  Multiple Models.
+                </span>
+                <br />
+                One Verified Winner.
+              </h1>
+              <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
+                VeriGen submits your prompt to multiple AI providers simultaneously, scores each output across quality dimensions, and delivers the consensus winner with complete provenance.
+              </p>
+            </div>
 
-        {isAuthenticated ? (
-          <Button
-            onClick={() => setLocation("/generate")}
-            size="lg"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8 py-6"
-          >
-            Start Generating <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-        ) : (
-          <Button
-            onClick={() => startLogin()}
-            size="lg"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8 py-6"
-          >
-            Sign In to Get Started <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-        )}
-      </section>
+            {isAuthenticated ? (
+              <Button
+                onClick={() => setLocation("/generate")}
+                size="lg"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8 py-6"
+              >
+                Start Generating <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            ) : (
+              <Button
+                onClick={() => startLogin()}
+                size="lg"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8 py-6"
+              >
+                Sign In to Get Started <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            )}
+          </section>
+        </>
+      )}
 
       {/* Features Section */}
       <section className="max-w-6xl mx-auto px-4 py-20">

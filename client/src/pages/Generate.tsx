@@ -30,9 +30,33 @@ export default function Generate() {
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
-    setCurrentStatus("pending");
-    setResult(null);
-    await generateMutation.mutateAsync({ prompt });
+    
+    const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true" || (typeof window !== 'undefined' && localStorage.getItem('DEMO_MODE') === 'true');
+
+    if (isDemoMode) {
+      // Simulate multi-stage progress for demo mode
+      const stages = [
+        { status: "pending", delay: 800 },
+        { status: "generating", delay: 2500 },
+        { status: "scoring", delay: 1500 },
+        { status: "storage", delay: 1200 },
+      ];
+
+      setCurrentStatus("pending");
+      setResult(null);
+
+      for (const stage of stages) {
+        setCurrentStatus(stage.status);
+        await new Promise(resolve => setTimeout(resolve, stage.delay));
+      }
+      
+      // Final call to get mock data
+      await generateMutation.mutateAsync({ prompt });
+    } else {
+      setCurrentStatus("pending");
+      setResult(null);
+      await generateMutation.mutateAsync({ prompt });
+    }
   };
 
   if (!isAuthenticated) {

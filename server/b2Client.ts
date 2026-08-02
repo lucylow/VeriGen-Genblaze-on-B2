@@ -49,6 +49,13 @@ export async function storeJobManifest(
   jobId: number,
   manifest: Omit<ManifestData, "sha256">
 ): Promise<{ path: string; hash: string }> {
+  if (process.env.DEMO_MODE === "true") {
+    const hash = crypto.createHash("sha256").update(JSON.stringify(manifest)).digest("hex");
+    return {
+      path: `s3://verigen-demo-bucket/jobs/job_${jobId}/manifest.json`,
+      hash,
+    };
+  }
   try {
     const manifestJson = JSON.stringify(manifest, null, 2);
     const hash = crypto.createHash("sha256").update(manifestJson).digest("hex");
@@ -78,6 +85,9 @@ export async function storeJobManifest(
  * Get signed URL for manifest retrieval
  */
 export async function getManifestUrl(jobId: number): Promise<string> {
+  if (process.env.DEMO_MODE === "true") {
+    return `https://demo.verigen.ai/manifests/${jobId}.json`;
+  }
   try {
     const key = `jobs/job_${jobId}/manifest.json`;
     const url = await getSignedUrl(
@@ -103,6 +113,9 @@ export async function storeCandidateImage(
   model: string,
   imageData: Buffer
 ): Promise<string> {
+  if (process.env.DEMO_MODE === "true") {
+    return `s3://verigen-demo-bucket/jobs/job_${jobId}/candidates/${model}.png`;
+  }
   try {
     const key = `jobs/job_${jobId}/candidates/${model}.png`;
 

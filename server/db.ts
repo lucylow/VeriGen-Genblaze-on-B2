@@ -2,6 +2,7 @@ import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, jobs, candidates, scores } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import * as mockData from "../shared/mock";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -78,6 +79,9 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 }
 
 export async function getUserByOpenId(openId: string) {
+  if (process.env.DEMO_MODE === "true") {
+    return mockData.MOCK_USERS.find(u => u.openId === openId) || mockData.MOCK_USERS[0];
+  }
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot get user: database not available");
@@ -91,6 +95,9 @@ export async function getUserByOpenId(openId: string) {
 
 // VeriGen-specific queries
 export async function createJob(userId: number, prompt: string) {
+  if (process.env.DEMO_MODE === "true") {
+    return { id: Math.floor(Math.random() * 10000) };
+  }
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -104,6 +111,9 @@ export async function createJob(userId: number, prompt: string) {
 }
 
 export async function getJobHistory(userId: number) {
+  if (process.env.DEMO_MODE === "true") {
+    return mockData.MOCK_JOBS;
+  }
   const db = await getDb();
   if (!db) return [];
 
@@ -115,6 +125,9 @@ export async function getJobHistory(userId: number) {
 }
 
 export async function getJobWithCandidates(jobId: number) {
+  if (process.env.DEMO_MODE === "true") {
+    return mockData.MOCK_JOBS.find(j => j.id === jobId) || mockData.MOCK_JOBS[0];
+  }
   const db = await getDb();
   if (!db) return null;
 

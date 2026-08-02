@@ -13,6 +13,16 @@ export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 // with "invalid oauth state". It returns void by design, so there is no URL to
 // stash across renders.
 export const startLogin = () => {
+  const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true" || (typeof window !== 'undefined' && localStorage.getItem('DEMO_MODE') === 'true');
+  
+  if (isDemoMode) {
+    console.log("[VeriGen] Demo Mode: Bypassing login");
+    // In demo mode, we just stay on the page and the mock TRPC link handles the rest
+    // But we might need to reload to trigger the mock user being returned
+    window.location.reload();
+    return;
+  }
+
   const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
   const appId = import.meta.env.VITE_APP_ID;
   const redirectUri = `${window.location.origin}/api/oauth/callback`;

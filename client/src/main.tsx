@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { mockTrpcLink } from "@/lib/mockTrpcLink";
 import { COOKIE_NAME, UNAUTHED_ERR_MSG } from '@shared/const';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
@@ -37,10 +38,18 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
+const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true" || (typeof window !== 'undefined' && localStorage.getItem('DEMO_MODE') === 'true');
+
+if (isDemoMode) {
+  console.log("%c[VeriGen] Demo Mode Active", "color: #10a37f; font-weight: bold; font-size: 14px;");
+}
+
 const trpcClient = trpc.createClient({
   links: [
-    httpBatchLink({
-      url: "/api/trpc",
+    isDemoMode 
+      ? mockTrpcLink 
+      : httpBatchLink({
+          url: "/api/trpc",
       transformer: superjson,
       headers() {
         // Preview auto-login fallback: when the browser blocks iframe cookies
