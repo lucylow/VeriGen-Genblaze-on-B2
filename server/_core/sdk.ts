@@ -7,6 +7,7 @@ import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
+import { mockUser } from "../mock/jobs";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -273,6 +274,9 @@ class SDKServer {
     const session = await this.verifySession(sessionToken);
 
     if (!session) {
+      if (ENV.demoMode) {
+        return mockUser as any;
+      }
       throw ForbiddenError("Invalid session cookie");
     }
 

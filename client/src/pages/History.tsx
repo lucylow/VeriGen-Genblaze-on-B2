@@ -77,7 +77,13 @@ export default function History() {
                   {/* Thumbnail */}
                   <div className="md:col-span-1">
                     <div className="aspect-square rounded-lg bg-slate-200 overflow-hidden flex items-center justify-center">
-                      {job.winnerId ? (
+                      {(job as any).winnerImageUrl ? (
+                        <img 
+                          src={(job as any).winnerImageUrl} 
+                          alt="Winner" 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : job.winnerId ? (
                         <div className="text-center">
                           <p className="text-sm font-bold text-slate-600">Winner</p>
                           <p className="text-2xl font-bold text-emerald-600">

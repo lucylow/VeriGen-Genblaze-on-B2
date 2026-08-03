@@ -5,6 +5,8 @@ import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { createJob, addCandidate, addScore, updateJobStatus, getJobHistory, getJobWithCandidates } from "./db";
 import { generateMockCandidates, selectWinner } from "./mockMediaProvider";
 import { storeJobManifest } from "./b2Client";
+import { ENV } from "./_core/env";
+import { startMockGeneration } from "./mock/pipeline";
 
 export const appRouter = router({
   system: systemRouter,
@@ -27,6 +29,12 @@ export const appRouter = router({
           // Create job record
           const job = await createJob(ctx.user.id, input.prompt);
           const jobId = job.id;
+
+          if (ENV.demoMode) {
+            // Start generation in background
+            startMockGeneration(jobId, input.prompt);
+            return { jobId };
+          }
 
           // Update status to generating
           await updateJobStatus(jobId, "generating");

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,6 @@ export default function Generate() {
   const generateMutation = trpc.verigen.generateImage.useMutation({
     onSuccess: (data) => {
       setJobId(data.jobId);
-      setResult(data);
-      setCurrentStatus("complete");
     },
     onError: (error) => {
       console.error("Generation failed:", error);
@@ -28,35 +26,47 @@ export default function Generate() {
     },
   });
 
+  const jobDetails = trpc.verigen.getJobDetails.useQuery(
+    { jobId: jobId as number },
+    {
+      enabled: !!jobId && currentStatus !== "complete",
+      refetchInterval: (query) => {
+        const data = query.state.data;
+        if (data?.status === "complete" || data?.status === "failed") {
+          return false;
+        }
+        return 1000;
+      },
+    }
+  );
+
+  useEffect(() => {
+    if (jobDetails.data) {
+      setCurrentStatus(jobDetails.data.status);
+      if (jobDetails.data.status === "complete") {
+        // Find winner from candidates
+        const winner = jobDetails.data.candidates.find(
+          (c: any) => c.id === jobDetails.data.winnerId
+        ) || jobDetails.data.candidates[0];
+        
+        setResult({
+          jobId: jobDetails.data.id,
+          candidates: jobDetails.data.candidates,
+          winner: winner ? {
+            ...winner,
+            consensusScore: jobDetails.data.consensusScore
+          } : null
+        });
+      }
+    }
+  }, [jobDetails.data]);
+
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
-    
-    const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true" || (typeof window !== 'undefined' && localStorage.getItem('DEMO_MODE') === 'true');
-
-    if (isDemoMode) {
-      // Simulate multi-stage progress for demo mode
-      const stages = [
-        { status: "pending", delay: 800 },
-        { status: "generating", delay: 2500 },
-        { status: "scoring", delay: 1500 },
-        { status: "storage", delay: 1200 },
-      ];
-
-      setCurrentStatus("pending");
-      setResult(null);
-
-      for (const stage of stages) {
-        setCurrentStatus(stage.status);
-        await new Promise(resolve => setTimeout(resolve, stage.delay));
-      }
-      
-      // Final call to get mock data
-      await generateMutation.mutateAsync({ prompt });
-    } else {
-      setCurrentStatus("pending");
-      setResult(null);
-      await generateMutation.mutateAsync({ prompt });
-    }
+    setCurrentStatus("pending");
+    setResult(null);
+    setJobId(null);
+    await generateMutation.mutateAsync({ prompt });
   };
 
   if (!isAuthenticated) {
@@ -74,6 +84,9 @@ export default function Generate() {
               <span className="text-white font-bold text-sm">V</span>
             </div>
             <span className="font-bold text-lg text-slate-900">VeriGen</span>
+            <span className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded uppercase tracking-wider border border-amber-200">
+              Demo Mode
+            </span>
           </div>
           <Button variant="outline" onClick={() => setLocation("/")}>
             Home

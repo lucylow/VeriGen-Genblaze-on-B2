@@ -1,8 +1,7 @@
 import { eq, desc } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, jobs, candidates, scores } from "../drizzle/schema";
-import { ENV } from './_core/env';
-import * as mockData from "../shared/mock";
+import { users, jobs, candidates, scores } from "@drizzle/schema";
+import { ENV } from "./_core/env";
+import * as mockDb from "./mock/jobs";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -79,9 +78,6 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 }
 
 export async function getUserByOpenId(openId: string) {
-  if (process.env.DEMO_MODE === "true") {
-    return mockData.MOCK_USERS.find(u => u.openId === openId) || mockData.MOCK_USERS[0];
-  }
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot get user: database not available");
@@ -95,8 +91,9 @@ export async function getUserByOpenId(openId: string) {
 
 // VeriGen-specific queries
 export async function createJob(userId: number, prompt: string) {
-  if (process.env.DEMO_MODE === "true") {
-    return { id: Math.floor(Math.random() * 10000) };
+  if (ENV.demoMode) {
+    const job = await mockDb.createMockJob(userId, prompt);
+    return { id: job.id };
   }
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -111,8 +108,8 @@ export async function createJob(userId: number, prompt: string) {
 }
 
 export async function getJobHistory(userId: number) {
-  if (process.env.DEMO_MODE === "true") {
-    return mockData.MOCK_JOBS;
+  if (ENV.demoMode) {
+    return await mockDb.getMockJobHistory(userId);
   }
   const db = await getDb();
   if (!db) return [];
@@ -125,8 +122,8 @@ export async function getJobHistory(userId: number) {
 }
 
 export async function getJobWithCandidates(jobId: number) {
-  if (process.env.DEMO_MODE === "true") {
-    return mockData.MOCK_JOBS.find(j => j.id === jobId) || mockData.MOCK_JOBS[0];
+  if (ENV.demoMode) {
+    return await mockDb.getMockJob(jobId);
   }
   const db = await getDb();
   if (!db) return null;
@@ -150,6 +147,10 @@ export async function updateJobStatus(
   status: string,
   updates?: { winnerId?: number; consensusScore?: number; b2JobPath?: string; manifestHash?: string }
 ) {
+  if (ENV.demoMode) {
+    await mockDb.updateMockJobStatus(jobId, status as any, updates);
+    return;
+  }
   const db = await getDb();
   if (!db) return;
 
@@ -168,6 +169,11 @@ export async function addCandidate(
   imageUrl: string,
   b2Key?: string
 ) {
+  if (ENV.demoMode) {
+    // This is handled by addMockCandidate in the pipeline
+    // But for consistency:
+    return await mockDb.addMockCandidate(jobId, { model, imageUrl, scores: {} as any });
+  }
   const db = await getDb();
   if (!db) return null;
 
@@ -196,6 +202,10 @@ export async function addScore(
     consensusScore: number;
   }
 ) {
+  if (ENV.demoMode) {
+    // Mock scores are already included in the candidate object in mockDb
+    return { id: candidateId };
+  }
   const db = await getDb();
   if (!db) return null;
 

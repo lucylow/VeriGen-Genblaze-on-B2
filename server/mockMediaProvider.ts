@@ -6,6 +6,13 @@
 export interface MockCandidate {
   model: string;
   imageUrl: string;
+  width: number;
+  height: number;
+  seed: number;
+  prompt: string;
+  timestamp: string;
+  provider: string;
+  confidence: number;
   scores: {
     promptAdherence: number;
     visualQuality: number;
@@ -115,10 +122,18 @@ export function generateMockCandidates(
     const svg = generateMockSvg(model, prompt);
     const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 
+    const scores = generateMockScores(model, seed + models.indexOf(model));
     return {
       model,
       imageUrl: dataUrl,
-      scores: generateMockScores(model, seed + models.indexOf(model)),
+      width: 512,
+      height: 512,
+      seed: seed + models.indexOf(model),
+      prompt,
+      timestamp: new Date().toISOString(),
+      provider: model,
+      confidence: scores.consensusScore / 100,
+      scores,
     };
   });
 }
